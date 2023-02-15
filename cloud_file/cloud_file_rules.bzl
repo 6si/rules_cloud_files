@@ -1,7 +1,7 @@
 """
 Module for downloading and validating the checksum of the downloaded file.
 
-This module contains the `validate_checksum` function and `s3_file_download` function
+This module contains the `validate_checksum` function and `cloud_file_download` function
 """
 def validate_checksum(repo_ctx, url, local_path, expected_sha256):
     """
@@ -18,7 +18,7 @@ def validate_checksum(repo_ctx, url, local_path, expected_sha256):
         expected_sha256 (str): The expected sha256 value of the file.
 
     Raises:
-    Exception: If the checksum of the file does not match the expected_sha256 value.
+        Exception: If the checksum of the file does not match the expected_sha256 value.
     """
     sha256_path = repo_ctx.which("sha256sum")
     repo_ctx.report_progress("Checksumming {}.".format(local_path))
@@ -33,7 +33,7 @@ def validate_checksum(repo_ctx, url, local_path, expected_sha256):
             sha256,
         ))
 
-_S3_FILE_DOWNLOAD = """
+_CLOUD_FILE_DOWNLOAD = """
 package(default_visibility = ["//visibility:public"])
 
 filegroup(
@@ -42,7 +42,7 @@ filegroup(
 )
 """
 
-def s3_file_download(
+def cloud_file_download(
         repo_ctx,
         file_path,
         expected_sha256,
@@ -50,34 +50,42 @@ def s3_file_download(
         bucket = "",
         build_file = "",
         profile = ""):
-    """Securely download an AWS S3 file and apply patches if necessary.
+    """Securely download the file from the cloud provider and apply patches if necessary.
 
-    The function downloads the specified file from an AWS S3 bucket and checks its
+    The function downloads the specified file from a cloud provider and checks its
     sha256 hash to verify its integrity. If patches are provided, it will apply them
     to the downloaded file.
 
     Args:
         repo_ctx (object): Bazel repository context.
-        file_path (str): Path to the file to download from S3.
+        file_path (str): Path to the file to download from Cloud Provider.
         expected_sha256 (str): Expected sha256 hash of the downloaded file.
-        provider (str): Name of the cloud provider, in this case "AWS".
-        bucket (str): Name of the AWS S3 bucket containing the file.
+        provider (str): Name of the cloud provider, default is set to "s3".
+        bucket (str): Name of the bucket containing the file.
         build_file(str): Build file for the downloaded file
-        profile (str): AWS CLI profile to use for authentication.
+        profile (str): CLI profile to use for authentication.
 
     Raises:
-    Exception: If the aws command line utility is not found, if downloading the
-    file fails, if the sha256 hash of the downloaded file does not match the
-    expected value, or if applying a patch fails.
+        Exception: If the command line utility is not found, if downloading the
+        file fails, if the sha256 hash of the downloaded file does not match the
+        expected value, or if applying a patch fails.
 """
     filename = repo_ctx.path(file_path).basename
-
-    tool_path = repo_ctx.which("aws")
-    extra_flags = ["--profile", profile] if profile else []
-    src_url = "s3://{}/{}".format(bucket, file_path)
-    cmd = [tool_path] + extra_flags + ["s3", "cp", src_url, "."]
-    if tool_path == None:
-        fail("Could not find command line utility for {}".format(provider.capitalize()))
+    if provider == "s3":
+        tool_path = repo_ctx.which("aws")
+        if tool_path == None:
+            fail("Could not find command line utility for S3")
+        extra_flags = ["--profile", profile] if profile else []
+        src_url = "s3://{}/{}".format(bucket, file_path)
+        cmd = [tool_path] + extra_flags + ["s3", "cp", src_url, "."]
+    elif provider == "gcp":
+        tool_path = repo_ctx.which("gsutil")
+        if tool_path == None:
+            fail("Could not find command line utility for GCP")
+        src_url = "gs://{}/{}".format(bucket, file_path)
+        cmd = [tool_path, "cp", src_url, "."]
+    else:
+        fail("Provider not supported: " + provider.capitalize())
 
     # Download.
     repo_ctx.report_progress("Downloading {}.".format(src_url))
@@ -90,7 +98,7 @@ def s3_file_download(
     validate_checksum(repo_ctx, file_path, filename, expected_sha256)
     
     # Default build file set to get the file
-    repo_ctx.file("BUILD.bazel", _S3_FILE_DOWNLOAD.format(filename), executable = False)
+    repo_ctx.file("BUILD.bazel", _CLOUD_FILE_DOWNLOAD.format(filename), executable = False)
     
     # Use user provided build file if exists
     bash_path = repo_ctx.os.environ.get("BAZEL_SH", "bash")
@@ -98,8 +106,8 @@ def s3_file_download(
         repo_ctx.execute([bash_path, "-c", "rm -f BUILD BUILD.bazel"])
         repo_ctx.symlink(build_file, "BUILD.bazel")
 
-def _s3_file_impl(ctx):
-    s3_file_download(
+def _cloud_file_impl(ctx):
+    cloud_file_download(
         ctx,
         ctx.attr.file_path,
         ctx.attr.sha256,
@@ -109,8 +117,8 @@ def _s3_file_impl(ctx):
         bucket = ctx.attr.bucket if hasattr(ctx.attr, "bucket") else "",
     )
 
-s3_file = repository_rule(
-    implementation = _s3_file_impl,
+cloud_file = repository_rule(
+    implementation = _cloud_file_impl,
     attrs = {
         "bucket": attr.string(mandatory = True, doc = "Bucket name"),
         "file_path": attr.string(

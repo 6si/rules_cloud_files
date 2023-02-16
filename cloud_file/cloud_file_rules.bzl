@@ -111,7 +111,7 @@ def _cloud_file_impl(ctx):
         ctx,
         ctx.attr.file_path,
         ctx.attr.sha256,
-        provider = ctx.attr._provider,
+        provider = ctx.attr.provider,
         build_file = ctx.attr.build_file,
         profile = ctx.attr.profile if hasattr(ctx.attr, "profile") else "",
         bucket = ctx.attr.bucket if hasattr(ctx.attr, "bucket") else "",
@@ -131,6 +131,6 @@ cloud_file = repository_rule(
             allow_single_file = True,
             doc = "BUILD file for the downloaded file",
         ),
-        "_provider": attr.string(default = "s3"),
+        "provider": attr.string(default = "s3"),
     },
 )

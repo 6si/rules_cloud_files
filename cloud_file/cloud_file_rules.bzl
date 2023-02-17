@@ -50,11 +50,10 @@ def cloud_file_download(
         bucket = "",
         build_file = "",
         profile = ""):
-    """Securely download the file from the cloud provider and apply patches if necessary.
+    """Securely download the file from the cloud provider.
 
     The function downloads the specified file from a cloud provider and checks its
-    sha256 hash to verify its integrity. If patches are provided, it will apply them
-    to the downloaded file.
+    sha256 hash to verify its integrity.
 
     Args:
         repo_ctx (object): Bazel repository context.
@@ -67,8 +66,8 @@ def cloud_file_download(
 
     Raises:
         Exception: If the command line utility is not found, if downloading the
-        file fails, if the sha256 hash of the downloaded file does not match the
-        expected value, or if applying a patch fails.
+        file fails or if the sha256 hash of the downloaded file does not match the
+        expected value.
 """
     filename = repo_ctx.path(file_path).basename
     if provider == "s3":
@@ -117,7 +116,7 @@ def _cloud_file_impl(ctx):
         bucket = ctx.attr.bucket if hasattr(ctx.attr, "bucket") else "",
     )
 
-cloud_file = repository_rule(
+s3_file = repository_rule(
     implementation = _cloud_file_impl,
     attrs = {
         "bucket": attr.string(mandatory = True, doc = "Bucket name"),
@@ -132,5 +131,23 @@ cloud_file = repository_rule(
             doc = "BUILD file for the downloaded file",
         ),
         "provider": attr.string(default = "s3"),
+    },
+)
+
+gcp_file = repository_rule(
+    implementation = _cloud_file_impl,
+    attrs = {
+        "bucket": attr.string(mandatory = True, doc = "Bucket name"),
+        "file_path": attr.string(
+            mandatory = True,
+            doc = "Relative path to the archive file within the bucket",
+        ),
+        "profile": attr.string(doc = "Profile to use for authentication."),
+        "sha256": attr.string(mandatory = True, doc = "SHA256 checksum of the archive"),
+        "build_file": attr.label(
+            allow_single_file = True,
+            doc = "BUILD file for the downloaded file",
+        ),
+        "provider": attr.string(default = "gcp"),
     },
 )

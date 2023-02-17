@@ -130,7 +130,7 @@ s3_file = repository_rule(
             allow_single_file = True,
             doc = "BUILD file for the downloaded file",
         ),
-        "provider": attr.string(default = "s3"),
+        "_provider": attr.string(default = "s3"),
     },
 )
 
@@ -148,6 +148,6 @@ gcp_file = repository_rule(
             allow_single_file = True,
             doc = "BUILD file for the downloaded file",
         ),
-        "provider": attr.string(default = "gcp"),
+        "_provider": attr.string(default = "gcp"),
     },
 )

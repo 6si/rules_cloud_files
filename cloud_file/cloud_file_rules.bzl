@@ -110,7 +110,7 @@ def _cloud_file_impl(ctx):
         ctx,
         ctx.attr.file_path,
         ctx.attr.sha256,
-        provider = ctx.attr.provider,
+        provider = ctx.attr._provider,
         build_file = ctx.attr.build_file,
         profile = ctx.attr.profile if hasattr(ctx.attr, "profile") else "",
         bucket = ctx.attr.bucket if hasattr(ctx.attr, "bucket") else "",

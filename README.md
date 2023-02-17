@@ -12,9 +12,9 @@ git_repository(
     commit = "d8097550e5c507f29c760a670daa3230c52dda59",
 )
 
-load("@rules_cloud_files//cloud_file:cloud_file_rules.bzl", "cloud_file")
+load("@rules_cloud_files//cloud_file:cloud_file_rules.bzl", "s3_file")
 
-cloud_file(
+s3_file(
     name = "my_file",
     bucket = "bootstrap-software",
     file_path = "hadoop2-configs-20180306012540.tgz",

@@ -50,7 +50,8 @@ def cloud_file_download(
         bucket = "",
         build_file = "",
         profile = ""):
-    """Securely download the file from the cloud provider.
+    """
+    Securely download the file from the cloud provider.
 
     The function downloads the specified file from a cloud provider and checks its
     sha256 hash to verify its integrity.

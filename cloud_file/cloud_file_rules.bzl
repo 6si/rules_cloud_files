@@ -68,7 +68,7 @@ def cloud_file_download(
         Exception: If the command line utility is not found, if downloading the
         file fails or if the sha256 hash of the downloaded file does not match the
         expected value.
-"""
+    """
     filename = repo_ctx.path(file_path).basename
     if provider == "s3":
         tool_path = repo_ctx.which("aws")

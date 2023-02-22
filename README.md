@@ -16,9 +16,9 @@ load("@rules_cloud_files//cloud_file:cloud_file_rules.bzl", "s3_file")
 
 s3_file(
     name = "my_file",
-    bucket = "bootstrap-software",
-    file_path = "hadoop2-configs-20180306012540.tgz",
+    bucket = "my-bucket",
+    file_path = "my-file.tgz",
     sha256 = "74a0bdd648f009ebce72494f54903230a9dcebaca1d438a13c1c691ad2f1e110",
 )
 ```
-This is an example to download the file from s3://bootstrap-software/hadoop2-configs-20180306012540.tgz.
+This is an example to download the file s3://my-bucket/my-file.tgz.

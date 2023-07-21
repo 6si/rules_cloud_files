@@ -159,9 +159,13 @@ lambda_upload_s3 = rule(
     implementation=_upload_to_s3_impl,
     attrs={
         "src": attr.label(allow_single_file=True),
+        # function_name MUST MATCH the name of the lambda function within AWS
         "function_name": attr.string(),
+        # AWS config profile to use
         "profile": attr.string(default=""),
+        # S3 Bucket
         "bucket": attr.string(default="6si-lambda"),
+        # S3 key Prefix, useful for testing
         "key_prefix": attr.string(default=""),
     },
     outputs={"done": "%{name}_done"},
@@ -209,7 +213,9 @@ def _lambda_deploy_code_imp(ctx):
 lambda_deploy = rule(
     implementation=_lambda_deploy_code_imp,
     attrs={
+        # Must be a label to a lambda_uplaod_s3 rule
         "src": attr.label(allow_single_file=True),
+        # AWS config profile to use
         "profile": attr.string(default=""),
     },
     outputs={"done": "%{name}_done"},

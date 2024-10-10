@@ -49,6 +49,7 @@ def cloud_file_download(
         provider,
         bucket = "",
         build_file = "",
+        rename_file = "",
         profile = ""):
     """
     Securely download the file from the cloud provider.
@@ -63,6 +64,7 @@ def cloud_file_download(
         provider (str): Name of the cloud provider, default is set to "s3".
         bucket (str): Name of the bucket containing the file.
         build_file(str): Build file for the downloaded file
+        rename_file(str): Name of the file to rename it to
         profile (str): CLI profile to use for authentication.
 
     Raises:
@@ -77,7 +79,10 @@ def cloud_file_download(
             fail("Could not find command line utility for S3")
         extra_flags = ["--profile", profile] if profile else []
         src_url = "s3://{}/{}".format(bucket, file_path)
-        cmd = [tool_path] + extra_flags + ["s3", "cp", src_url, "."]
+        if rename_file:
+            cmd = [tool_path] + extra_flags + ["s3", "cp", src_url, "./" + rename_file]
+        else:
+            cmd = [tool_path] + extra_flags + ["s3", "cp", src_url, "."]
     elif provider == "gcp":
         tool_path = repo_ctx.which("gsutil")
         if tool_path == None:
@@ -113,6 +118,7 @@ def _cloud_file_impl(ctx):
         ctx.attr.sha256,
         provider = ctx.attr._provider,
         build_file = ctx.attr.build_file,
+        rename_file = ctx.attr.rename_file,
         profile = ctx.attr.profile if hasattr(ctx.attr, "profile") else "",
         bucket = ctx.attr.bucket if hasattr(ctx.attr, "bucket") else "",
     )
@@ -130,6 +136,10 @@ s3_file = repository_rule(
         "build_file": attr.label(
             allow_single_file = True,
             doc = "BUILD file for the downloaded file",
+        ),
+        "rename_file": attr.string(
+            mandatory = False,
+            doc = "Name of the file to want to rename it to",
         ),
         "_provider": attr.string(default = "s3"),
     },

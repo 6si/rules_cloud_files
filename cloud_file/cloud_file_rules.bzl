@@ -98,8 +98,11 @@ def cloud_file_download(
     if result.return_code != 0:
         fail("Failed to download {} from {}: {}".format(src_url, provider.capitalize(), result.stderr))
 
-    # Verify.
-    filename = repo_ctx.path(src_url).basename
+    # Verify
+    if rename_file:
+        filename = rename_file
+    else:
+        filename = repo_ctx.path(src_url).basename
     validate_checksum(repo_ctx, file_path, filename, expected_sha256)
     
     # Default build file set to get the file
